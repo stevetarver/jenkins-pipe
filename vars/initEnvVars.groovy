@@ -28,8 +28,9 @@ def call(Closure body) {
     env.GIT_REPO_NAME = sh(script: 'git config remote.origin.url | cut -d "/" -f5 | cut -d "." -f1', returnStdout: true).trim()
     env.COMMIT_HASH = sh (script: 'git rev-parse HEAD', returnStdout: true).trim()
 
-    env.dockerRegistry = 'index.docker.io'
-    env.dockerRegistryUrl = 'https://index.docker.io'
+    // For docker, these two must be identical
+    env.dockerRegistry = 'docker.io'
+    env.dockerRegistryUrl = 'docker.io'
     // Docker CI image start options: link to the host docker sock, use host volume for cached items
     env.dockerCiArgs = '-v /root/.m2/repository:/root/.m2/repository -v /root/.gradle/caches/modules-2:/home/gradle/.gradle/caches/modules-2 -v /root/.gradle/wrapper:/home/gradle/.gradle/wrapper -v /var/run/docker.sock:/var/run/docker.sock'
     // This lock file prevents concurrent builds, used for caching - we've had good success just deleting it on each build start

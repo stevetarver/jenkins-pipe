@@ -1,9 +1,62 @@
 This project provides an opinionated Jenkins build pipeline described in [my blog](http://stevetarver.github.io/).
 
+
+## Jenkins setup
+
+This pipline has hard-coded references to Jenkins configuration which must exist prior to the first build:
+
+* Credentials
+    * dockerhub-jenkins-account: permission to pull from private repos
+    * github-jenkins-account: permission to pull from private repos
+    * nexus-jenkins-account: permission to push/pull from our private Nexus
+* Environment variables:
+    * TARGET_ENV: identifies what part of the pipeline to execute, target environment. One of `dev`, `pre-prod`, or `prod`.
+
+To set up credentials in Jenkins, from the Jenkins landing page:
+
+1. Click on "Credentials" in the left sidebar
+1. Click on "System" that pops up below "Credentials"
+1. Click on "Global credentials"
+1. Click on "Add Credentials" and add accounts for each in the list above. The Nexus account can use any creds if you are not providing this facility, it just needs to be present.
+    * Kind: Username with password
+    * Scope: Global
+    * Username:
+    * Password:
+    * ID: {an id from the credential list above}
+    * Description: {an id from the credential list above}
+
+To set environment variables in Jenkins, form the Jenkins landing page:
+
+1. Click on "Manage Jenkins" in the left sidebar
+1. Click on "Configure System"
+1. Under "Global Properties", check "Environment variables"
+1. Click the "Add" button
+    * Name: TARGET_ENV
+    * Value: dev
+1. Click the "Save" button at the bottom of the page
+
+Next, we need to register our Jenkins shared library with Jenkins so it is trusted and available to pipelines:
+
+1. Click on "Manage Jenkins" in the left sidebar
+1. Click on "Configure System"
+1. Under "Global Pipeline Libraries", click "Add"
+    * Name: jenkins-pipe
+    * Default version: master
+    * All options checked
+    * Click "Retrieval method" -> "Modern SCM"
+    * Select "GitHub"
+    * Credentials: github-jenkins-account
+    * Owner: stevetarver
+    * Repository: jenkins-pipe
+1. Click the "Save" button
+
+
+## Your Jenkinsfile
+
 Each client `Jenkinsfile` points to a `jenkins-pipe` versioned release branch:
 
 ```
-@Library('jenkins-pipe@release-1.0.0') _
+@Library('jenkins-pipe@release-1.0') _
 ```
 
 This versioning strategy reflects interface changes, not functionality. New functionality is developed in the `master` branch and merged into the latest `release-*` branch in a non-breaking way. If the interface must change, a new `release-*` branch is created and projects can upgrade on their timeline.
@@ -15,16 +68,6 @@ See:
 * the project Releases tab for release history
 * the release branch `README.md` for instructions on using that version
 * the `CHANGELOG.md` for changes and migration notes
-
-## Add jenkins-pipe to Jenkins
-
-This library is configured in Jenkins global configuration so it is automatically available to all projects.
-
-1. Open Configure Jenkins
-2. Add `jenkins-pipe` to Global Pipeline Libraries
-3. Default version: master
-
-## Your Jenkinsfile
 
 Each project `Jenkinsfile` provides configuration to adjust pipeline behavior to suit that project. This is a standard `release-1.0.0` Jenkinsfile for a maven project:
 
