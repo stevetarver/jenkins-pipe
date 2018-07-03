@@ -59,16 +59,16 @@ def call(config) {
                 }
                 when { not { branch 'release' } }
                 steps {
-                    echo '===== Test stage begin ============================================================================='
                     // Allow clients to pull other images for testing
                     withCredentials([usernamePassword(
                             credentialsId: env.dockerJenkinsCreds,
                             passwordVariable: 'DOCKER_REG_PASSWORD',
                             usernameVariable: 'DOCKER_REG_USER')]) {
+                        echo '===== Test stage begin ============================================================================='
                         sh "rm -f ${gradleLock}"
                         sh "${config.stageCommands.get 'test'}"
+                        echo '===== Test stage end   ============================================================================='
                     }
-                    echo '===== Test stage end   ============================================================================='
                 }
                 post {
                     always {
@@ -90,25 +90,25 @@ def call(config) {
                 }
                 when { anyOf { branch 'master'; branch 'hotfix' } }
                 steps {
-                    echo '===== Package stage begin =========================================================================='
                     withCredentials([usernamePassword(
                             credentialsId: env.nexusJenkinsCreds,
                             passwordVariable: 'NEXUS_PASSWORD',
                             usernameVariable: 'NEXUS_USER')]) {
+                        echo '===== Package stage begin =========================================================================='
                         sh "rm -f ${gradleLock}"
                         sh "${config.stageCommands.get 'package'}"
+                        echo '===== Package stage end   =========================================================================='
                     }
-                    echo '===== Package stage end   =========================================================================='
                 }
             }
             stage('Archive') {
                 when { anyOf { branch 'master'; branch 'hotfix' } }
                 steps {
-                    echo '===== Archive stage begin =========================================================================='
                     withCredentials([usernamePassword(
                             credentialsId: env.dockerJenkinsCreds,
                             passwordVariable: 'DOCKER_REG_PASSWORD',
                             usernameVariable: 'DOCKER_REG_USER')]) {
+                        echo '===== Archive stage begin =========================================================================='
                         retryWithDelay {
                             sh '''
                                 docker login -u ${DOCKER_REG_USER} -p ${DOCKER_REG_PASSWORD} ${dockerRegistryUrl}
@@ -117,20 +117,20 @@ def call(config) {
                                 docker logout ${dockerRegistryUrl}
                             '''
                         }
+                        echo '===== Archive stage end =========================================================================='
                     }
-                    echo '===== Archive stage end =========================================================================='
                 }
             }
             stage('Deploy') {
                 when { anyOf { branch 'master'; branch 'hotfix' } }
                 steps {
-                    echo '===== Deploy stage begin ==========================================================================='
                     withCredentials(config?.pipeline?.secrets) {
                         configFileProvider(config?.pipeline?.facts) {
+                            echo '===== Deploy stage begin ==========================================================================='
                             sh "${config.stageCommands.get 'deploy'}"
+                            echo '===== Deploy stage end   ==========================================================================='
                         }
                     }
-                    echo '===== Deploy stage end   ==========================================================================='
                 }
             }
             stage('Integration Test') {
@@ -146,16 +146,16 @@ def call(config) {
                 }
                 when { anyOf { branch 'master'; branch 'hotfix' } }
                 steps {
-                    echo '===== Integration Test stage begin ================================================================='
                     // Allow clients to pull other images for testing
                     withCredentials([usernamePassword(
                             credentialsId: env.dockerJenkinsCreds,
                             passwordVariable: 'DOCKER_REG_PASSWORD',
                             usernameVariable: 'DOCKER_REG_USER')]) {
+                        echo '===== Integration Test stage begin ================================================================='
                         sh "rm -f ${gradleLock}"
                         sh "${config.stageCommands.get 'integrationTest'}"
+                        echo '===== Integration Test stage end   ================================================================='
                     }
-                    echo '===== Integration Test stage end   ================================================================='
                 }
             }
         }

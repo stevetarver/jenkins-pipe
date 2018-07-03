@@ -48,9 +48,9 @@ def call(config) {
             stage('Canary Deploy') {
                 when { not { environment name: 'skipCanaryStage', value: 'true' } }
                 steps {
-                    echo '===== Canary Deploy stage begin ===================================================================='
                     withCredentials(config?.pipeline?.secrets) {
                         configFileProvider(config?.pipeline?.facts) {
+                            echo '===== Canary Deploy stage begin ===================================================================='
                             script {
                                 env.ROLLBACK_REVISION = sh(script: 'helm history ${DOCKER_PROJECT}-${CANARY_LOCATION} --max=1 | awk \'BEGIN {FS="\\t"}; FNR==2{print $1}\'', returnStdout: true).trim()
 
@@ -66,9 +66,9 @@ def call(config) {
                                 }
                             }
                             sh "${config.stageCommands.get 'canaryDeploy'}"
+                            echo '===== Canary Deploy stage end   ===================================================================='
                         }
                     }
-                    echo '===== Canary Deploy stage end   ===================================================================='
                 }
             }
             stage('Canary Test') {
@@ -128,9 +128,9 @@ def call(config) {
             stage('Prod Deploy') {
                 when { not {environment name: 'ROLLBACK_MODE', value: 'true'}}
                 steps {
-                    echo '===== Prod Deploy stage begin ======================================================================'
                     withCredentials(config?.pipeline?.secrets) {
                         configFileProvider(config?.pipeline?.facts) {
+                            echo '===== Prod Deploy stage begin ======================================================================'
                             script {
                                 if (params.releaseType == 'redeploy') {
                                     if (!params.releaseVersion || params.releaseVersion == '') {
@@ -143,9 +143,9 @@ def call(config) {
                                 }
                             }
                             sh "${config.stageCommands.get 'prodDeploy'}"
+                            echo '===== Prod Deploy stage end   ======================================================================'
                         }
                     }
-                    echo '===== Prod Deploy stage end   ======================================================================'
                 }
             }
             stage('Prod Test') {
@@ -161,16 +161,16 @@ def call(config) {
                 }
                 when { not { environment name: 'ROLLBACK_MODE', value: 'true' } }
                 steps {
-                    echo '===== Prod Test stage begin ========================================================================'
                     // Allow clients to pull other images for testing
                     withCredentials([usernamePassword(
                             credentialsId: env.dockerJenkinsCreds,
                             passwordVariable: 'DOCKER_REG_PASSWORD',
                             usernameVariable: 'DOCKER_REG_USER')]) {
+                        echo '===== Prod Test stage begin ========================================================================'
                         sh "rm -f ${gradleLock}"
                         sh "${config.stageCommands.get 'prodTest'}"
+                        echo '===== Prod Test stage end   ========================================================================'
                     }
-                    echo '===== Prod Test stage end   ========================================================================'
                 }
             }
         }
