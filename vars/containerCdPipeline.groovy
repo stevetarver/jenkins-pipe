@@ -229,7 +229,7 @@ def call(config) {
                     fi
                 
                     echo "${ECHO_PREFIX} Removing orphaned docker volumes"
-                    docker volume prune
+                    docker volume prune --force
                      
                     # see https://www.projectatomic.io/blog/2015/07/what-are-docker-none-none-images/
                     # Currently, this casts too wide a net

@@ -1,3 +1,5 @@
+import static com.makara.jenkins.Utils.isStringNullOrEmpty
+
 /**
  * I generate all base environment variables.
  *
@@ -28,22 +30,23 @@ def call(Closure body) {
     env.GIT_REPO_NAME = sh(script: 'git config remote.origin.url | cut -d "/" -f5 | cut -d "." -f1', returnStdout: true).trim()
     env.COMMIT_HASH = sh (script: 'git rev-parse HEAD', returnStdout: true).trim()
 
-    // For docker, these two must be identical
+    // Used for tagging docker images - TODO: should omit this for docker?
     env.dockerRegistry = 'docker.io'
-    env.dockerRegistryUrl = 'docker.io'
+    // Used for pipeline agent declarations - must include protocol
+    env.dockerRegistryUrl = 'https://registry.hub.docker.com'
     // Docker CI image start options: link to the host docker sock, use host volume for cached items
     env.dockerCiArgs = '-v /root/.m2/repository:/root/.m2/repository -v /root/.gradle/caches/modules-2:/home/gradle/.gradle/caches/modules-2 -v /root/.gradle/wrapper:/home/gradle/.gradle/wrapper -v /var/run/docker.sock:/var/run/docker.sock'
     // This lock file prevents concurrent builds, used for caching - we've had good success just deleting it on each build start
     env.gradleLock = '/home/gradle/.gradle/caches/modules-2/modules-2.lock'
 
     // Provide default values if not specified by user
-    if (null == env.DOCKER_PROJECT || 'null' == env.DOCKER_PROJECT || '' == env.DOCKER_PROJECT?.trim()) {
+    if (isStringNullOrEmpty(env.DOCKER_PROJECT)) {
         env.DOCKER_PROJECT = env.GIT_REPO_NAME
     }
-    if (null == env.dockerGroup || 'null' == env.dockerGroup || '' == env.dockerGroup?.trim()) {
+    if (isStringNullOrEmpty(env.dockerGroup)) {
         env.dockerGroup = 'stevetarver'
     }
-    if (null == env.DOCKER_CI_IMAGE || 'null' == env.DOCKER_CI_IMAGE || '' == env.DOCKER_CI_IMAGE?.trim()) {
+    if (isStringNullOrEmpty(env.DOCKER_CI_IMAGE)) {
         env.DOCKER_CI_IMAGE = "${env.dockerRegistry}/${env.dockerGroup}/${env.DOCKER_PROJECT}-ci:latest"
     }
 
