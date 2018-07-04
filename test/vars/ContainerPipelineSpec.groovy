@@ -4,71 +4,73 @@ import com.makara.jenkins.JenkinsSpecification
 
 class ContainerPipelineSpec extends JenkinsSpecification {
     def env
+    def pipeline
     def stageCommands
     def scriptUnderSpec
     def configMap
 
     def setup() {
-        env = [TARGET_ENV: "DEV"]
+        env = [TARGET_ENV: 'dev']
         stageCommands = [
-                build          : "build",
-                test           : "test",
-                package        : "package",
-                deploy         : "deploy",
-                integrationTest: "intTest",
-                canaryDeploy   : "canaryDeploy",
-                canaryTest     : "canaryTest",
-                canaryRollback : "canaryRollback",
-                prodDeploy     : "prodDeploy",
-                prodTest       : "prodTest"
+                build          : 'build',
+                test           : 'test',
+                package        : 'package',
+                deploy         : 'deploy',
+                integrationTest: 'intTest',
+                canaryDeploy   : 'canaryDeploy',
+                canaryTest     : 'canaryTest',
+                canaryRollback : 'canaryRollback',
+                prodDeploy     : 'prodDeploy',
+                prodTest       : 'prodTest'
         ]
-
+        pipeline = [
+                dockerGroup: 'makara',
+                slackWorkspace: 'makaradesigngroup',
+                slackChannel: 'build',
+                slackCredentialId: 'makaradesigngroup-build-slack-token',
+        ]
         configMap = [
                 environment: [
                         PROD_LOCATIONS: 'ut1',
                         CANARY_LOCATION: 'uc1',
                 ],
-                pipeline: [
-                        dockerGroup: 'makara',
-                        slackChannel: 'tarver-build',
-                        slackCredentialId: 'tarver-build-slack-token',
-                ],
+                pipeline: pipeline,
                 stageCommands: stageCommands
         ]
 
         binding.setVariable('env', env)
         binding.setVariable('stageCommands', stageCommands)
 
-        scriptUnderSpec = loadScript("vars/containerPipeline.groovy")
+        scriptUnderSpec = loadScript('vars/containerPipeline.groovy')
 
-        helper.registerAllowedMethod("containerCdPipeline", [Map], null)
-        helper.registerAllowedMethod("containerCiPipeline", [Map], null)
-        helper.registerAllowedMethod("error", [String], { throw new RuntimeException(it) })
+        helper.registerAllowedMethod('containerCdPipeline', [Map], null)
+        helper.registerAllowedMethod('containerCiPipeline', [Map], null)
+        helper.registerAllowedMethod('error', [String], { throw new RuntimeException(it) })
     }
 
-    def 'Create containerPipeline in prod'() {
+    def 'containerCdPipeline called when in prod'() {
         given:
-        env = [TARGET_ENV: "prod"]
+        env = [TARGET_ENV: 'prod']
         binding.setVariable('env', env)
 
         when:
         scriptUnderSpec.call(configMap)
 
         then:
-        verify("containerCdPipeline", configMap)
+        verify('containerCdPipeline', configMap)
     }
 
-    def 'Create containerPipeline in non prod env'() {
+    def 'containerCiPipeline called if not in prod'() {
         given: 'any environment'
 
         when:
         scriptUnderSpec.call(configMap)
 
         then:
-        verify("containerCiPipeline", configMap)
+        verify('containerCiPipeline', configMap)
     }
 
-    def 'Create containerPipeline with cd override as true'() {
+    def 'containerCdPipeline called when cd = true'() {
         given:
         configMap.cd = true
 
@@ -76,10 +78,10 @@ class ContainerPipelineSpec extends JenkinsSpecification {
         scriptUnderSpec.call(configMap)
 
         then:
-        verify("containerCdPipeline", configMap)
+        verify('containerCdPipeline', configMap)
     }
 
-    def 'Create containerPipeline with cd override as false'() {
+    def 'containerCiPipeline is called when cd = false'() {
         given:
         configMap.cd = false
 
@@ -87,10 +89,10 @@ class ContainerPipelineSpec extends JenkinsSpecification {
         scriptUnderSpec.call(configMap)
 
         then:
-        verify("containerCiPipeline", configMap)
+        verify('containerCiPipeline', configMap)
     }
 
-    def 'Create containerPipeline without stageCommands'() {
+    def 'containerPipeline validation fails when there are no stageCommands'() {
         given:
         configMap.remove('stageCommands')
 
@@ -99,7 +101,7 @@ class ContainerPipelineSpec extends JenkinsSpecification {
 
         then:
         thrown RuntimeException
-        binding.getVariable('currentBuild').result == "ABORTED"
+        binding.getVariable('currentBuild').result == 'ABORTED'
     }
 
     def 'Create containerPipeline with missing a required stageCommand'() {
@@ -116,7 +118,7 @@ class ContainerPipelineSpec extends JenkinsSpecification {
         // the exception identified the stage missing the command
         e.message.contains("'test' is required")
         // the build was aborted (not failed, etc.)
-        binding.getVariable('currentBuild').result == "ABORTED"
+        binding.getVariable('currentBuild').result == 'ABORTED'
     }
 
     def 'Create containerPipeline with missing required env variable'() {
@@ -145,7 +147,7 @@ class ContainerPipelineSpec extends JenkinsSpecification {
         scriptUnderSpec.call(configMap)
 
         then:
-        verify("containerCiPipeline", configMap)
+        verify('containerCiPipeline', configMap)
     }
 
     def 'Create containerPipeline and skipCanaryStage by absence of canaryDeploy stageCommand'() {
@@ -157,7 +159,7 @@ class ContainerPipelineSpec extends JenkinsSpecification {
         scriptUnderSpec.call(configMap)
 
         then:
-        verify("containerCiPipeline", configMap)
+        verify('containerCiPipeline', configMap)
     }
 
     def 'Create containerPipeline with no facts or secrets'() {
@@ -169,9 +171,41 @@ class ContainerPipelineSpec extends JenkinsSpecification {
         scriptUnderSpec.call(configMap)
 
         then: 'verify facts and secrets are empty arrays'
-        verify("containerCiPipeline", configMap)
+        verify('containerCiPipeline', configMap)
         configMap.pipeline.secrets.empty
         configMap.pipeline.facts.empty
 
     }
+
+    def 'containerPipeline validation succeeds when no slack* fields specified'() {
+        given: 'pipeline block has no slack* fields'
+        configMap.get('pipeline').remove('slackWorkspace')
+        configMap.get('pipeline').remove('slackChannel')
+        configMap.get('pipeline').remove('slackCredentialId')
+
+        when:
+        scriptUnderSpec.call(configMap)
+
+        then:
+        verify('containerCiPipeline', configMap)
+    }
+
+    def 'containerPipeline validation fails when one slack* fields missing'() {
+        given: 'pipeline block is missing one slack* field'
+        configMap.get('pipeline').remove('slackWorkspace')
+
+        when:
+        scriptUnderSpec.call(configMap)
+
+        then:
+        Exception e = thrown()
+        // we threw an exception
+        e != null
+        // the exception identified the stage missing the command
+        e.message.contains("'slackWorkspace' is required")
+        // the build was aborted (not failed, etc.)
+        binding.getVariable('currentBuild').result == 'ABORTED'
+    }
+
+
 }

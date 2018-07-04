@@ -81,8 +81,9 @@ containerPipeline([
     ],
     pipeline: [
         dockerGroup: 'stevetarver',
-        slackChannel: 'tarver-build',
-        slackCredentialId: 'tarver-build-slack-token',
+        slackWorkspace: 'makaradesigngroup',
+        slackChannel: 'build',
+        slackCredentialId: 'makaradesigngroup-build-slack-token',
     ],
     stageCommands: [
         build: "./jenkins/scripts/build.sh",

@@ -33,8 +33,8 @@ def call(Map config) {
 
     config?.pipeline?.facts = config?.pipeline?.facts ?: []
     config?.pipeline?.secrets = config?.pipeline?.secrets ?: []
-    echo "configured facts: ${config?.pipeline?.facts}"
-    echo "configured secrets: ${config?.pipeline?.secrets}"
+    echo "using facts: ${config?.pipeline?.facts}"
+    echo "using secrets: ${config?.pipeline?.secrets}"
 
     // pipeline block validations -------------------------------------------------------
     def skipCanary = env.skipCanaryStage == "true" || !config?.stageCommands?.canaryDeploy

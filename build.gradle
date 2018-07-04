@@ -50,6 +50,8 @@ test {
     testLogging {
         // Show stdout, stderr for debugging tests
         showStandardStreams = true
+        // Show exceptions
+        exceptionFormat = 'full'
     }
 }
 
