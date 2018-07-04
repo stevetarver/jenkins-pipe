@@ -13,6 +13,8 @@
  */
 def call(Map config) {
 
+    println config
+
     echo '===== Pipeline Validation begin ===================================================================='
     def errorList = ['Your Jenkinsfile has errors that prevent building this project:']
 
@@ -40,24 +42,18 @@ def call(Map config) {
 
     def requiredPipeline = ['slackWorkspace', 'slackChannel', 'slackCredentialId']
     // Slack notifications are optional - notifications are omitted if all values are blank
-    echo '1'
     if(env.slackWorkspace || env.slackChannel || env.slackCredentialId) {
-        echo '2'
         requiredPipeline.each {
-            echo '3'
             // NOTE: everything in env is a string - if you assign null, you will get "null"
             if (null == env[it] || 'null' == env[it] || '' == env[it]?.trim()) {
-                echo '4'
                 currentBuild.result = 'ABORTED'
                 errorList += "==> pipeline block variable '${it}' is required."
             }
         }
     } else {
-        echo '6'
         env.skipSlackNotifications = 'true'
     }
 
-    echo '7'
     def requiredEnvironment = []
     def skipCanary = env.skipCanaryStage == 'true' || !config?.stageCommands?.canaryDeploy
     if(!skipCanary) {
@@ -95,6 +91,7 @@ def call(Map config) {
     if('ABORTED' == currentBuild.result) {
         errorList += ''
         errorList += 'See the jenkins-pipe README for more information: https://github.com/stevetarver/jenkins-pipe'
+        // TODO: This does not always print the error - investigate (slack validation errors)
         error(errorList.join('\n'))
     }
 
