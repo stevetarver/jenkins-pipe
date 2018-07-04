@@ -19,6 +19,14 @@ def call(Map config) {
     echo '===== Pipeline Validation begin ===================================================================='
     def errorList = ['Your Jenkinsfile has errors that prevent building this project:']
 
+    // jenkins environment --------------------------------------------------------------
+    // Validate Jenkins configuration to help identify initial config omissions and config drift
+    if(isStringNullOrEmpty(env.TARGET_ENV)) {
+        currentBuild.result = 'ABORTED'
+        errorList += '==> Jenkins global environment variable \'TARGET_ENV\' is required'
+    }
+    // TODO: check required credentialIds
+
     // environment block ----------------------------------------------------------------
     env.DOCKER_PROJECT = config?.environment?.DOCKER_PROJECT
     env.DOCKER_CI_IMAGE = config?.environment?.DOCKER_CI_IMAGE

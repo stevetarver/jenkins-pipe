@@ -10,7 +10,9 @@ class ContainerPipelineSpec extends JenkinsSpecification {
     def configMap
 
     def setup() {
-        env = [TARGET_ENV: 'dev']
+        env = [
+                TARGET_ENV: 'dev',
+        ]
         stageCommands = [
                 build          : 'build',
                 test           : 'test',
@@ -31,6 +33,7 @@ class ContainerPipelineSpec extends JenkinsSpecification {
         ]
         configMap = [
                 environment: [
+                        DOCKER_CI_IMAGE: 'stevetarver/maven-java-ci:3.5.4-jdk-8-alpine-r0',
                         PROD_LOCATIONS: 'ut1',
                         CANARY_LOCATION: 'uc1',
                 ],
@@ -58,6 +61,7 @@ class ContainerPipelineSpec extends JenkinsSpecification {
 
         then:
         verify('containerCdPipeline', configMap)
+        verify(0,'containerCiPipeline', configMap)
     }
 
     def 'containerCiPipeline called if not in prod'() {
@@ -68,6 +72,7 @@ class ContainerPipelineSpec extends JenkinsSpecification {
 
         then:
         verify('containerCiPipeline', configMap)
+        verify(0,'containerCdPipeline', configMap)
     }
 
     def 'containerCdPipeline called when cd = true'() {
@@ -104,7 +109,7 @@ class ContainerPipelineSpec extends JenkinsSpecification {
         binding.getVariable('currentBuild').result == 'ABORTED'
     }
 
-    def 'Create containerPipeline with missing a required stageCommand'() {
+    def 'containerPipeline validation fails when missing a required stageCommand'() {
         given: 'stageCommands is missing a required stage'
         binding.setVariable('stageCommands', stageCommands.remove('test'))
 
@@ -121,7 +126,7 @@ class ContainerPipelineSpec extends JenkinsSpecification {
         binding.getVariable('currentBuild').result == 'ABORTED'
     }
 
-    def 'Create containerPipeline with missing required env variable'() {
+    def 'containerPipeline validation fails when missing required env variable'() {
         given: 'CANARY_LOCATION is missing'
         configMap.get('environment').remove('CANARY_LOCATION')
 
@@ -138,8 +143,8 @@ class ContainerPipelineSpec extends JenkinsSpecification {
         binding.getVariable('currentBuild').result == "ABORTED"
     }
 
-    def 'Create containerPipeline and skipCanaryStage'() {
-        given: 'skipCanaryStage is true and CANARY_LOCATION env is missing'
+    def 'containerPipeline validation fails when skipCanaryStage is true and CANARY_LOCATION env is missing'() {
+        given:
         configMap.get('environment').remove('CANARY_LOCATION')
         configMap.get('pipeline').put('skipCanaryStage', 'true')
 
@@ -203,6 +208,24 @@ class ContainerPipelineSpec extends JenkinsSpecification {
         e != null
         // the exception identified the stage missing the command
         e.message.contains("'slackWorkspace' is required")
+        // the build was aborted (not failed, etc.)
+        binding.getVariable('currentBuild').result == 'ABORTED'
+    }
+
+    def 'containerPipeline validation fails TARGET_ENV not defined'() {
+        given: 'pipeline block is missing one slack* field'
+        env = [TRGET_ENV: 'dev']
+        binding.setVariable('env', env)
+
+        when:
+        scriptUnderSpec.call(configMap)
+
+        then:
+        Exception e = thrown()
+        // we threw an exception
+        e != null
+        // the exception identified the stage missing the command
+        e.message.contains("'TARGET_ENV' is required")
         // the build was aborted (not failed, etc.)
         binding.getVariable('currentBuild').result == 'ABORTED'
     }

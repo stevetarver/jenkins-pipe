@@ -3,7 +3,7 @@ def call(config) {
         echo '===== Pipeline Initialization begin ================================================================'
         checkout scm
 
-        initEnvVars()
+        initPipelineVars()
         getProdReleaseVer()
         sh "env | sort"
 
@@ -13,9 +13,9 @@ def call(config) {
                     passwordVariable: 'DOCKER_REG_PASSWORD',
                     usernameVariable: 'DOCKER_REG_USER')]) {
                 sh """
-                    docker login -u ${DOCKER_REG_USER} -p ${DOCKER_REG_PASSWORD} ${env.dockerRegistryUrl}
-                    docker pull ${env.DOCKER_CI_IMAGE}
-                    docker logout ${env.dockerRegistryUrl}
+                    docker login -u ${DOCKER_REG_USER} -p ${DOCKER_REG_PASSWORD} ${dockerRegistryUrl}
+                    docker pull ${DOCKER_CI_IMAGE}
+                    docker logout ${dockerRegistryUrl}
                 """
             }
         }
@@ -204,43 +204,8 @@ def call(config) {
                 }
             }
             always {
-                // TODO: extract this to its own var
                 echo '===== Post build cleanup begin ====================================================================='
-                sh '''
-                    ECHO_PREFIX='===>'
-                    
-                    # Get all containers for this project and branch
-                    CONTAINERS=$(docker ps -a | grep ${DOCKER_BUILD_IMAGE_NAME} | cut -f1 -d' ')
-                
-                    if [ -n "${CONTAINERS}" ]; then
-                        echo "${ECHO_PREFIX} Stopping and removing ${DOCKER_BUILD_IMAGE_NAME} containers"
-                        docker rm -f -v ${CONTAINERS}
-                    else
-                        echo "${ECHO_PREFIX} No ${DOCKER_BUILD_IMAGE_NAME} containers running"
-                    fi
-                
-                    IMAGES=$(docker images -q ${DOCKER_BUILD_IMAGE_NAME} | uniq)
-                
-                    if [ -n "${IMAGES}" ]; then
-                        echo "${ECHO_PREFIX} Removing ${DOCKER_BUILD_IMAGE_NAME} images"
-                        docker rmi -f ${IMAGES}
-                    else
-                        echo "${ECHO_PREFIX} No ${DOCKER_BUILD_IMAGE_NAME} images exist"
-                    fi
-                
-                    echo "${ECHO_PREFIX} Removing orphaned docker volumes"
-                    docker volume prune --force
-                     
-                    # see https://www.projectatomic.io/blog/2015/07/what-are-docker-none-none-images/
-                    # Currently, this casts too wide a net
-                    # DANGLING=$(docker images -q -f 'dangling=true')
-                    # if [ -n "${DANGLING}" ]; then
-                    #     echo "${ECHO_PREFIX} Removing dangling images"
-                    #     docker rmi -f ${DANGLING}
-                    # else
-                    #     echo "${ECHO_PREFIX} No dangling images exist"
-                    # fi
-                 '''
+                postBuildDockerCleanup()
                 echo '===== Post build cleanup end   ====================================================================='
             }
         }
