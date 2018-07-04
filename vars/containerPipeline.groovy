@@ -1,3 +1,6 @@
+import static com.makara.jenkins.Utils.isStringNullOrEmpty
+import static com.makara.jenkins.Utils.stringHasContent
+
 /**
  * I am the entry point to CI and CD portions of the container pipeline
  *
@@ -12,8 +15,6 @@
  *   used to get it to that agent.
  */
 def call(Map config) {
-
-    echo config
 
     echo '===== Pipeline Validation begin ===================================================================='
     def errorList = ['Your Jenkinsfile has errors that prevent building this project:']
@@ -42,10 +43,11 @@ def call(Map config) {
 
     def requiredPipeline = ['slackWorkspace', 'slackChannel', 'slackCredentialId']
     // Slack notifications are optional - notifications are omitted if all values are blank
-    if(env.slackWorkspace || env.slackChannel || env.slackCredentialId) {
+    if(stringHasContent(env.slackWorkspace) || stringHasContent(env.slackChannel) || stringHasContent(env.slackCredentialId)) {
         requiredPipeline.each {
             // NOTE: everything in env is a string - if you assign null, you will get "null"
-            if (null == env[it] || 'null' == env[it] || '' == env[it]?.trim()) {
+            if(isStringNullOrEmpty(env[it])) {
+//            if (null == env[it] || 'null' == env[it] || '' == env[it]?.trim()) {
                 currentBuild.result = 'ABORTED'
                 errorList += "==> pipeline block variable '${it}' is required."
             }
@@ -61,7 +63,8 @@ def call(Map config) {
     }
     requiredEnvironment.each {
         // NOTE: everything in env is a string - if you assign null, you will get "null"
-        if (null == env[it] || 'null' == env[it] || '' == env[it]?.trim()) {
+        if(isStringNullOrEmpty(env[it])) {
+//        if (null == env[it] || 'null' == env[it] || '' == env[it]?.trim()) {
             currentBuild.result = 'ABORTED'
             errorList += "==> environment block variable '${it}' is required."
         }
@@ -69,7 +72,6 @@ def call(Map config) {
 
     // stageCommands block --------------------------------------------------------------
     def requiredStageCommands = ['test', 'package', 'deploy', 'integrationTest', 'prodDeploy', 'prodTest']
-
     if (!skipCanary) {
         requiredStageCommands.addAll(['canaryDeploy', 'canaryTest', 'canaryRollback'])
     }
@@ -91,7 +93,6 @@ def call(Map config) {
     if('ABORTED' == currentBuild.result) {
         errorList += ''
         errorList += 'See the jenkins-pipe README for more information: https://github.com/stevetarver/jenkins-pipe'
-        // TODO: This does not always print the error - investigate (slack validation errors)
         error(errorList.join('\n'))
     }
 
