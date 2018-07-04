@@ -42,7 +42,7 @@ def call(Closure unused) {
     // Used for tagging docker images: registry/group/repo:tag
     env.dockerRegistry = 'docker.io'
     // Used for registry logins - both pipeline agent declarations and shell
-    env.dockerRegistryUrl = 'https://index.docker.io'
+    env.dockerRegistryUrl = 'https://registry.hub.docker.com'
     // Docker CI image start options: link to the host docker sock, use host volume for cached items
     env.dockerCiArgs = '-v /root/.m2/repository:/root/.m2/repository -v /root/.gradle/caches/modules-2:/home/gradle/.gradle/caches/modules-2 -v /root/.gradle/wrapper:/home/gradle/.gradle/wrapper -v /var/run/docker.sock:/var/run/docker.sock'
     // This lock file prevents concurrent builds, used for caching.
