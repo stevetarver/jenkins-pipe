@@ -161,23 +161,29 @@ def call(config) {
         }
         post {
             success {
-                if(env.skipSlackNotifications) {
-                    retryWithDelay {
-                        slackSend failOnError: true, color: 'good', teamDomain:"${env.slackWorkspace}", channel: "${env.slackChannel}", tokenCredentialId: "${env.slackCredentialId}", message: "<${env.JOB_DISPLAY_URL}|*${env.DOCKER_PROJECT}*>: Built ${env.BRANCH_NAME} v${env.BUILD_VER}"
+                script {
+                    if (env.skipSlackNotifications) {
+                        retryWithDelay {
+                            slackSend failOnError: true, color: 'good', teamDomain: "${env.slackWorkspace}", channel: "${env.slackChannel}", tokenCredentialId: "${env.slackCredentialId}", message: "<${env.JOB_DISPLAY_URL}|*${env.DOCKER_PROJECT}*>: Built ${env.BRANCH_NAME} v${env.BUILD_VER}"
+                        }
                     }
                 }
             }
             unstable {
-                if(env.skipSlackNotifications) {
-                    retryWithDelay {
-                        slackSend failOnError: true, color: 'warning', teamDomain:"${env.slackWorkspace}", channel: "${env.slackChannel}", tokenCredentialId: "${env.slackCredentialId}", message: "<${env.JOB_DISPLAY_URL}|*${env.DOCKER_PROJECT}*>: Built ${env.BRANCH_NAME} v${env.BUILD_VER} with test failures"
+                script {
+                    if (env.skipSlackNotifications) {
+                        retryWithDelay {
+                            slackSend failOnError: true, color: 'warning', teamDomain: "${env.slackWorkspace}", channel: "${env.slackChannel}", tokenCredentialId: "${env.slackCredentialId}", message: "<${env.JOB_DISPLAY_URL}|*${env.DOCKER_PROJECT}*>: Built ${env.BRANCH_NAME} v${env.BUILD_VER} with test failures"
+                        }
                     }
                 }
             }
             failure {
-                if(env.skipSlackNotifications) {
-                    retryWithDelay {
-                        slackSend failOnError: true, color: 'danger', teamDomain:"${env.slackWorkspace}", channel: "${env.slackChannel}", tokenCredentialId: "${env.slackCredentialId}", message: "<${env.JOB_DISPLAY_URL}|*${env.DOCKER_PROJECT}*>: Build failed ${env.BRANCH_NAME} v${env.BUILD_VER}"
+                script {
+                    if (env.skipSlackNotifications) {
+                        retryWithDelay {
+                            slackSend failOnError: true, color: 'danger', teamDomain: "${env.slackWorkspace}", channel: "${env.slackChannel}", tokenCredentialId: "${env.slackCredentialId}", message: "<${env.JOB_DISPLAY_URL}|*${env.DOCKER_PROJECT}*>: Build failed ${env.BRANCH_NAME} v${env.BUILD_VER}"
+                        }
                     }
                 }
             }
