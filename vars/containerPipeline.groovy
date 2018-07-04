@@ -13,7 +13,7 @@
  */
 def call(Map config) {
 
-    println config
+    echo config
 
     echo '===== Pipeline Validation begin ===================================================================='
     def errorList = ['Your Jenkinsfile has errors that prevent building this project:']
