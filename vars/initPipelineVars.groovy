@@ -33,16 +33,20 @@ def call(Closure unused) {
     env.GIT_REPO_NAME = sh(script: 'git config remote.origin.url | cut -d "/" -f5 | cut -d "." -f1', returnStdout: true).trim()
     env.COMMIT_HASH = sh (script: 'git rev-parse HEAD', returnStdout: true).trim()
 
-    // The registry part of the fully qualified image name is omitted if isDockerHub
-    // to simplify shell scripting based on image name. Docker omits any docker hub
-    // registry prefix on 'docker images' so we can't find build artifacts during
-    // post build cleanup.
+    // Using docker hub presents two problems
+    // - if you specify a URL during login, you may get an authorization error during push
+    // - if you tag your image with a registry, the registry is omitted during 'docker images'
+    //   making docker cleanup tedious through shell scripting
+    // Solution: when using docker hub, don't include the registry in login or image tag
     // Set to false if using any registry other than docker hub
     def isDockerhub = true
     // Used for tagging docker images: registry/group/repo:tag
-    env.dockerRegistry = 'docker.io'
+    // Set to empty string when using docker hub
+    env.dockerRegistry = ''
     // Used for registry logins - both pipeline agent declarations and shell
-    env.dockerRegistryUrl = 'https://registry.hub.docker.com'
+    // Set to empty string when using docker hub
+    env.dockerRegistryUrl = ''
+
     // Docker CI image start options: link to the host docker sock, use host volume for cached items
     env.dockerCiArgs = '-v /root/.m2/repository:/root/.m2/repository -v /root/.gradle/caches/modules-2:/home/gradle/.gradle/caches/modules-2 -v /root/.gradle/wrapper:/home/gradle/.gradle/wrapper -v /var/run/docker.sock:/var/run/docker.sock'
     // This lock file prevents concurrent builds, used for caching.
