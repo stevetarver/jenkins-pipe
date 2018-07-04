@@ -7,32 +7,36 @@ This pipline has hard-coded references to Jenkins configuration which must exist
 
 * Credentials
     * dockerhub-jenkins-account: permission to pull from private repos
-    * github-jenkins-account: permission to pull from private repos
+    * github-jenkins-account: permission to pull from private repos during build
     * nexus-jenkins-account: permission to push/pull from our private Nexus
 * Environment variables:
     * TARGET_ENV: identifies what part of the pipeline to execute, target environment. One of `dev`, `pre-prod`, or `prod`.
+
+Since the Docker and GitHub repos we'll be using are public, you can use your own creds for Docker/GitHub.
 
 To set up credentials in Jenkins, from the Jenkins landing page:
 
 1. Click on "Credentials" in the left sidebar
 1. Click on "System" that pops up below "Credentials"
 1. Click on "Global credentials"
-1. Click on "Add Credentials" and add accounts for each in the list above. The Nexus account can use any creds if you are not providing this facility, it just needs to be present.
+1. Click on "Add Credentials" and add items for each "*-account" item in the list above. If you are not providing a Nexus server, you can use any credentials - the credentialId just needs to be present.
     * Kind: Username with password
     * Scope: Global
     * Username:
     * Password:
     * ID: {an id from the credential list above}
-    * Description: {an id from the credential list above}
+    * Description: {the same id from the credential list above}
 
 To set environment variables in Jenkins, form the Jenkins landing page:
 
 1. Click on "Manage Jenkins" in the left sidebar
 1. Click on "Configure System"
 1. Under "Global Properties", check "Environment variables"
-1. Click the "Add" button
+1. Click the "Add" button to add the following:
     * Name: TARGET_ENV
     * Value: dev
+    * Name: K8S_CLUSTER_TYPE
+    * Value: minikube
 1. Click the "Save" button at the bottom of the page
 
 Next, we need to register our Jenkins shared library with Jenkins so it is trusted and available to pipelines:
@@ -49,6 +53,7 @@ Next, we need to register our Jenkins shared library with Jenkins so it is trust
     * Owner: stevetarver
     * Repository: jenkins-pipe
 1. Click the "Save" button
+
 
 
 ## Your Jenkinsfile
@@ -81,9 +86,8 @@ containerPipeline([
     ],
     pipeline: [
         dockerGroup: 'stevetarver',
-        slackWorkspace: 'makaradesigngroup',
-        slackChannel: 'build',
-        slackCredentialId: 'makaradesigngroup-build-slack-token',
+        slackChannel: 'tarver-build',
+        slackCredentialId: 'tarver-build-slack-token',
     ],
     stageCommands: [
         build: "./jenkins/scripts/build.sh",

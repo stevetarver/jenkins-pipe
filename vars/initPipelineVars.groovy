@@ -33,16 +33,16 @@ def call(Closure unused) {
     env.GIT_REPO_NAME = sh(script: 'git config remote.origin.url | cut -d "/" -f5 | cut -d "." -f1', returnStdout: true).trim()
     env.COMMIT_HASH = sh (script: 'git rev-parse HEAD', returnStdout: true).trim()
 
-    // Used for tagging docker images: registry/group/repo:tag
-    env.dockerRegistry = 'docker.io'
     // The registry part of the fully qualified image name is omitted if isDockerHub
     // to simplify shell scripting based on image name. Docker omits any docker hub
     // registry prefix on 'docker images' so we can't find build artifacts during
     // post build cleanup.
     // Set to false if using any registry other than docker hub
     def isDockerhub = true
+    // Used for tagging docker images: registry/group/repo:tag
+    env.dockerRegistry = 'docker.io'
     // Used for registry logins - both pipeline agent declarations and shell
-    env.dockerRegistryUrl = 'https://registry.hub.docker.com'
+    env.dockerRegistryUrl = 'https://docker.io'
     // Docker CI image start options: link to the host docker sock, use host volume for cached items
     env.dockerCiArgs = '-v /root/.m2/repository:/root/.m2/repository -v /root/.gradle/caches/modules-2:/home/gradle/.gradle/caches/modules-2 -v /root/.gradle/wrapper:/home/gradle/.gradle/wrapper -v /var/run/docker.sock:/var/run/docker.sock'
     // This lock file prevents concurrent builds, used for caching.
