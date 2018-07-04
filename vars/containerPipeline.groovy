@@ -25,6 +25,18 @@ def call(Map config) {
     env.CANARY_LOCATION = config?.environment?.CANARY_LOCATION
     env.PROD_LOCATIONS = config?.environment?.PROD_LOCATIONS
 
+    def requiredEnvironment = ['DOCKER_CI_IMAGE']
+    def skipCanary = config?.pipeline?.skipCanaryStage == 'true' || !config?.stageCommands?.canaryDeploy
+    if(!skipCanary) {
+        requiredEnvironment << "CANARY_LOCATION"
+    }
+    requiredEnvironment.each {
+        if(isStringNullOrEmpty(env[it])) {
+            currentBuild.result = 'ABORTED'
+            errorList += "==> environment block variable '${it}' is required."
+        }
+    }
+
     // pipeline block -------------------------------------------------------------------
     env.dockerGroup = config?.pipeline?.dockerGroup
     env.skipCanaryStage = config?.pipeline?.skipCanaryStage
@@ -39,15 +51,17 @@ def call(Map config) {
     echo "using facts: ${config?.pipeline?.facts}"
     echo "using secrets: ${config?.pipeline?.secrets}"
 
-    // pipeline block validations -------------------------------------------------------
-
-    def requiredPipeline = ['slackWorkspace', 'slackChannel', 'slackCredentialId']
+    def requiredPipeline = ['dockerGroup']
+    requiredPipeline.each {
+        if(isStringNullOrEmpty(env[it])) {
+            currentBuild.result = 'ABORTED'
+            errorList += "==> pipeline block variable '${it}' is required."
+        }
+    }
     // Slack notifications are optional - notifications are omitted if all values are blank
     if(stringHasContent(env.slackWorkspace) || stringHasContent(env.slackChannel) || stringHasContent(env.slackCredentialId)) {
-        requiredPipeline.each {
-            // NOTE: everything in env is a string - if you assign null, you will get "null"
+        ['slackWorkspace', 'slackChannel', 'slackCredentialId'].each {
             if(isStringNullOrEmpty(env[it])) {
-//            if (null == env[it] || 'null' == env[it] || '' == env[it]?.trim()) {
                 currentBuild.result = 'ABORTED'
                 errorList += "==> pipeline block variable '${it}' is required."
             }
@@ -56,21 +70,8 @@ def call(Map config) {
         env.skipSlackNotifications = 'true'
     }
 
-    def requiredEnvironment = []
-    def skipCanary = env.skipCanaryStage == 'true' || !config?.stageCommands?.canaryDeploy
-    if(!skipCanary) {
-        requiredEnvironment << "CANARY_LOCATION"
-    }
-    requiredEnvironment.each {
-        // NOTE: everything in env is a string - if you assign null, you will get "null"
-        if(isStringNullOrEmpty(env[it])) {
-//        if (null == env[it] || 'null' == env[it] || '' == env[it]?.trim()) {
-            currentBuild.result = 'ABORTED'
-            errorList += "==> environment block variable '${it}' is required."
-        }
-    }
-
     // stageCommands block --------------------------------------------------------------
+    // TODO: stageCommands need to be put in a serializable container, like env
     def requiredStageCommands = ['test', 'package', 'deploy', 'integrationTest', 'prodDeploy', 'prodTest']
     if (!skipCanary) {
         requiredStageCommands.addAll(['canaryDeploy', 'canaryTest', 'canaryRollback'])
