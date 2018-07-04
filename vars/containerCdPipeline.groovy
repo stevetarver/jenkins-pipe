@@ -178,7 +178,7 @@ def call(config) {
         post {
             success {
                 script {
-                    if (env.skipSlackNotifications) {
+                    if ('true' == env.skipSlackNotifications) {
                         retryWithDelay {
                             slackSend failOnError: true, color: 'good', teamDomain: "${env.slackWorkspace}", channel: "${env.slackChannel}", tokenCredentialId: "${env.slackCredentialId}", message: "<${env.JOB_DISPLAY_URL}|*${env.DOCKER_PROJECT}*>: Built ${env.BRANCH_NAME} v${env.RELEASE_VER}"
                         }
@@ -187,7 +187,7 @@ def call(config) {
             }
             unstable {
                 script {
-                    if (env.skipSlackNotifications) {
+                    if ('true' == env.skipSlackNotifications) {
                         retryWithDelay {
                             slackSend failOnError: true, color: 'warning', teamDomain: "${env.slackWorkspace}", channel: "${env.slackChannel}", tokenCredentialId: "${env.slackCredentialId}", message: "<${env.JOB_DISPLAY_URL}|*${env.DOCKER_PROJECT}*>: Built ${env.BRANCH_NAME} v${env.RELEASE_VER} with test failures"
                         }
@@ -196,7 +196,7 @@ def call(config) {
             }
             failure {
                 script {
-                    if (env.skipSlackNotifications) {
+                    if ('true' == env.skipSlackNotifications) {
                         retryWithDelay {
                             slackSend failOnError: true, color: 'danger', teamDomain: "${env.slackWorkspace}", channel: "${env.slackChannel}", tokenCredentialId: "${env.slackCredentialId}", message: "<${env.JOB_DISPLAY_URL}|*${env.DOCKER_PROJECT}*>: Build failed ${env.BRANCH_NAME} v${env.RELEASE_VER}"
                         }
