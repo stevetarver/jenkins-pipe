@@ -37,23 +37,29 @@ def call(Map config) {
     echo "using secrets: ${config?.pipeline?.secrets}"
 
     // pipeline block validations -------------------------------------------------------
-    def skipCanary = env.skipCanaryStage == "true" || !config?.stageCommands?.canaryDeploy
 
-    // Slack notifications are optional - notifications are omitted if all values are blank
     def requiredPipeline = ['slackWorkspace', 'slackChannel', 'slackCredentialId']
+    // Slack notifications are optional - notifications are omitted if all values are blank
+    echo '1'
     if(env.slackWorkspace || env.slackChannel || env.slackCredentialId) {
+        echo '2'
         requiredPipeline.each {
+            echo '3'
             // NOTE: everything in env is a string - if you assign null, you will get "null"
             if (null == env[it] || 'null' == env[it] || '' == env[it]?.trim()) {
+                echo '4'
                 currentBuild.result = 'ABORTED'
                 errorList += "==> pipeline block variable '${it}' is required."
             }
         }
     } else {
+        echo '6'
         env.skipSlackNotifications = 'true'
     }
 
+    echo '7'
     def requiredEnvironment = []
+    def skipCanary = env.skipCanaryStage == 'true' || !config?.stageCommands?.canaryDeploy
     if(!skipCanary) {
         requiredEnvironment << "CANARY_LOCATION"
     }
