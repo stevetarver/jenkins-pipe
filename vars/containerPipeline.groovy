@@ -25,6 +25,7 @@ def call(Map config) {
     // pipeline block -------------------------------------------------------------------
     env.dockerGroup = config?.pipeline?.dockerGroup
     env.skipCanaryStage = config?.pipeline?.skipCanaryStage
+    env.slackWorkspace = config?.pipeline?.slackWorkspace
     env.slackChannel = config?.pipeline?.slackChannel
     env.slackCredentialId = config?.pipeline?.slackCredentialId
     env.test_unitTestResults = config?.pipeline?.test?.unitTestResults
@@ -37,26 +38,30 @@ def call(Map config) {
 
     // pipeline block validations -------------------------------------------------------
     def skipCanary = env.skipCanaryStage == "true" || !config?.stageCommands?.canaryDeploy
-    def requiredPipeline = ['slackChannel', 'slackCredentialId']
-    def requiredEnvironment = []
 
+    // Slack notifications are optional - notifications are omitted if all values are blank
+    def requiredPipeline = ['slackWorkspace', 'slackChannel', 'slackCredentialId']
+    if(env.slackWorkspace || env.slackChannel || env.slackCredentialId) {
+        requiredPipeline.each {
+            // NOTE: everything in env is a string - if you assign null, you will get "null"
+            if (null == env[it] || 'null' == env[it] || '' == env[it]?.trim()) {
+                currentBuild.result = 'ABORTED'
+                errorList += "==> pipeline block variable '${it}' is required."
+            }
+        }
+    } else {
+        env.skipSlackNotifications = 'true'
+    }
+
+    def requiredEnvironment = []
     if(!skipCanary) {
         requiredEnvironment << "CANARY_LOCATION"
     }
-
     requiredEnvironment.each {
         // NOTE: everything in env is a string - if you assign null, you will get "null"
         if (null == env[it] || 'null' == env[it] || '' == env[it]?.trim()) {
             currentBuild.result = 'ABORTED'
             errorList += "==> environment block variable '${it}' is required."
-        }
-    }
-
-    requiredPipeline.each {
-        // NOTE: everything in env is a string - if you assign null, you will get "null"
-        if (null == env[it] || 'null' == env[it] || '' == env[it]?.trim()) {
-            currentBuild.result = 'ABORTED'
-            errorList += "==> pipeline block variable '${it}' is required."
         }
     }
 

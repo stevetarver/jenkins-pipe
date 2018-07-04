@@ -177,18 +177,24 @@ def call(config) {
 
         post {
             success {
-                retryWithDelay {
-                    slackSend failOnError: true, color: 'good', teamDomain:'makara', channel: "${env.slackChannel}", tokenCredentialId: "${env.slackCredentialId}", message: "<${env.JOB_DISPLAY_URL}|*${env.DOCKER_PROJECT}*>: Built ${env.BRANCH_NAME} v${env.RELEASE_VER}"
+                if(env.skipSlackNotifications) {
+                    retryWithDelay {
+                        slackSend failOnError: true, color: 'good', teamDomain: "${env.slackWorkspace}", channel: "${env.slackChannel}", tokenCredentialId: "${env.slackCredentialId}", message: "<${env.JOB_DISPLAY_URL}|*${env.DOCKER_PROJECT}*>: Built ${env.BRANCH_NAME} v${env.RELEASE_VER}"
+                    }
                 }
             }
             unstable {
-                retryWithDelay {
-                    slackSend failOnError: true, color: 'warning', teamDomain:'makara', channel: "${env.slackChannel}", tokenCredentialId: "${env.slackCredentialId}", message: "<${env.JOB_DISPLAY_URL}|*${env.DOCKER_PROJECT}*>: Built ${env.BRANCH_NAME} v${env.RELEASE_VER} with test failures"
+                if(env.skipSlackNotifications) {
+                    retryWithDelay {
+                        slackSend failOnError: true, color: 'warning', teamDomain: "${env.slackWorkspace}", channel: "${env.slackChannel}", tokenCredentialId: "${env.slackCredentialId}", message: "<${env.JOB_DISPLAY_URL}|*${env.DOCKER_PROJECT}*>: Built ${env.BRANCH_NAME} v${env.RELEASE_VER} with test failures"
+                    }
                 }
             }
             failure {
-                retryWithDelay {
-                    slackSend failOnError: true, color: 'danger', teamDomain:'makara', channel: "${env.slackChannel}", tokenCredentialId: "${env.slackCredentialId}", message: "<${env.JOB_DISPLAY_URL}|*${env.DOCKER_PROJECT}*>: Build failed ${env.BRANCH_NAME} v${env.RELEASE_VER}"
+                if(env.skipSlackNotifications) {
+                    retryWithDelay {
+                        slackSend failOnError: true, color: 'danger', teamDomain: "${env.slackWorkspace}", channel: "${env.slackChannel}", tokenCredentialId: "${env.slackCredentialId}", message: "<${env.JOB_DISPLAY_URL}|*${env.DOCKER_PROJECT}*>: Build failed ${env.BRANCH_NAME} v${env.RELEASE_VER}"
+                    }
                 }
             }
             always {

@@ -12,7 +12,7 @@ def call(config) {
                     passwordVariable: 'DOCKER_REG_PASSWORD',
                     usernameVariable: 'DOCKER_REG_USER')]) {
                 sh """
-                    echo 'eager fetch ci image...'
+                    echo 'eagerly fetching CI image...'
                     docker login -u ${DOCKER_REG_USER} -p ${DOCKER_REG_PASSWORD} ${env.dockerRegistryUrl}
                     docker pull ${env.DOCKER_CI_IMAGE}
                     docker logout ${env.dockerRegistryUrl}
@@ -161,18 +161,24 @@ def call(config) {
         }
         post {
             success {
-                retryWithDelay {
-                    slackSend failOnError: true, color: 'good', teamDomain:'makara', channel: "${env.slackChannel}", tokenCredentialId:"${env.slackCredentialId}", message: "<${env.JOB_DISPLAY_URL}|*${env.DOCKER_PROJECT}*>: Built ${env.BRANCH_NAME} v${env.BUILD_VER}"
+                if(env.skipSlackNotifications) {
+                    retryWithDelay {
+                        slackSend failOnError: true, color: 'good', teamDomain:"${env.slackWorkspace}", channel: "${env.slackChannel}", tokenCredentialId: "${env.slackCredentialId}", message: "<${env.JOB_DISPLAY_URL}|*${env.DOCKER_PROJECT}*>: Built ${env.BRANCH_NAME} v${env.BUILD_VER}"
+                    }
                 }
             }
             unstable {
-                retryWithDelay {
-                    slackSend failOnError: true, color: 'warning', teamDomain:'makara', channel: "${env.slackChannel}", tokenCredentialId:"${env.slackCredentialId}", message: "<${env.JOB_DISPLAY_URL}|*${env.DOCKER_PROJECT}*>: Built ${env.BRANCH_NAME} v${env.BUILD_VER} with test failures"
+                if(env.skipSlackNotifications) {
+                    retryWithDelay {
+                        slackSend failOnError: true, color: 'warning', teamDomain:"${env.slackWorkspace}", channel: "${env.slackChannel}", tokenCredentialId: "${env.slackCredentialId}", message: "<${env.JOB_DISPLAY_URL}|*${env.DOCKER_PROJECT}*>: Built ${env.BRANCH_NAME} v${env.BUILD_VER} with test failures"
+                    }
                 }
             }
             failure {
-                retryWithDelay {
-                    slackSend failOnError: true, color: 'danger', teamDomain:'makara', channel: "${env.slackChannel}", tokenCredentialId: "${env.slackCredentialId}", message: "<${env.JOB_DISPLAY_URL}|*${env.DOCKER_PROJECT}*>: Build failed ${env.BRANCH_NAME} v${env.BUILD_VER}"
+                if(env.skipSlackNotifications) {
+                    retryWithDelay {
+                        slackSend failOnError: true, color: 'danger', teamDomain:"${env.slackWorkspace}", channel: "${env.slackChannel}", tokenCredentialId: "${env.slackCredentialId}", message: "<${env.JOB_DISPLAY_URL}|*${env.DOCKER_PROJECT}*>: Build failed ${env.BRANCH_NAME} v${env.BUILD_VER}"
+                    }
                 }
             }
             always {
