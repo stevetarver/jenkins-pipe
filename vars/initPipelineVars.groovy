@@ -45,7 +45,7 @@ def call(Closure unused) {
     env.dockerRegistry = ''
     // Used for registry logins - both pipeline agent declarations and shell
     // Set to empty string when using docker hub
-    env.dockerRegistryUrl = ''
+    env.dockerRegistryUrl = 'https://index.docker.io'
 
     // Docker CI image start options: link to the host docker sock, use host volume for cached items
     env.dockerCiArgs = '-v /root/.m2/repository:/root/.m2/repository -v /root/.gradle/caches/modules-2:/home/gradle/.gradle/caches/modules-2 -v /root/.gradle/wrapper:/home/gradle/.gradle/wrapper -v /var/run/docker.sock:/var/run/docker.sock'
