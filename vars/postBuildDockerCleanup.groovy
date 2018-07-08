@@ -7,7 +7,10 @@
  */
 def call(Closure unused) {
 
-    sh '''
+    if('minikube' == env.K8S_CLUSTER_TYPE) {
+        echo "Skipping docker cleanup phase while in MiniKube"
+    } else {
+        sh '''
         ECHO_PREFIX='===>'
         
         # Get all containers for this project and branch
@@ -43,6 +46,7 @@ def call(Closure unused) {
         #     echo "${ECHO_PREFIX} No dangling images exist"
         # fi
      '''
+    }
 }
 
 return this
