@@ -1,6 +1,6 @@
 def call(config) {
 
-    def dockerCiAgent = {
+    def dockerCiAgent = { ->
         docker {
             image DOCKER_CI_IMAGE
             registryUrl env.dockerRegistryUrl
