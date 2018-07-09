@@ -1,7 +1,7 @@
 def call(config) {
 
     Closure dockerCiAgent = {
-        docker {
+        return docker {
             image DOCKER_CI_IMAGE
             registryUrl env.dockerRegistryUrl
             registryCredentialsId env.dockerJenkinsCreds
