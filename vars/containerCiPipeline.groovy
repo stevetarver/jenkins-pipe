@@ -40,7 +40,7 @@ def call(config) {
 
         stages {
             stage('Build') {
-                agent dockerCiAgent()
+                agent { dockerCiAgent() }
                 when { allOf { not { branch 'release' }; expression { config.stageCommands.get 'build'} } }
                 steps {
                     echo '===== Build stage begin ============================================================================'
@@ -50,7 +50,7 @@ def call(config) {
                 }
             }
             stage('Test') {
-                agent dockerCiAgent()
+                agent { dockerCiAgent() }
                 when { not { branch 'release' } }
                 steps {
                     // Allow clients to pull other images for testing
@@ -72,7 +72,7 @@ def call(config) {
                 }
             }
             stage('Package') {
-                agent dockerCiAgent()
+                agent { dockerCiAgent() }
                 when { anyOf {
                     allOf { branch 'master'; environment name: 'TARGET_ENV', value: 'dev' }
                     allOf { branch 'candidate'; environment name: 'TARGET_ENV', value: 'pre-prod' }
@@ -128,7 +128,7 @@ def call(config) {
                 }
             }
             stage('Integration Test') {
-                agent dockerCiAgent()
+                agent { dockerCiAgent() }
                 when { anyOf {
                     allOf { branch 'master'; environment name: 'TARGET_ENV', value: 'dev' }
                     allOf { branch 'candidate'; environment name: 'TARGET_ENV', value: 'pre-prod' }
