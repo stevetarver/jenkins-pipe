@@ -26,7 +26,7 @@ def call(config) {
         agent any
         options { timestamps() }
         parameters {
-            choice(choices: "master\nhotfix\nredeploy", description: 'Choose ReleaseType', name: 'releaseType')
+            choice(choices: "candidate\nhotfix\nredeploy", description: 'Choose ReleaseType', name: 'releaseType')
             choice(choices: releaseChoices(), description: 'Required when ReleaseType is "redeploy"', name: 'releaseVersion')
         }
 
@@ -37,7 +37,7 @@ def call(config) {
 
         stages {
             stage('Create Release') {
-                when { expression { params.releaseType == 'master' ||  params.releaseType == 'hotfix'}}
+                when { expression { params.releaseType == 'candidate' ||  params.releaseType == 'hotfix'}}
                 steps {
                     echo '===== Create Release stage begin ==================================================================='
                     createReleaseDockerImage()

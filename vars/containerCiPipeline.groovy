@@ -1,17 +1,5 @@
 def call(config) {
 
-    echo "Using agentDefinition"
-    def agentDefinition = {
-        docker {
-            image DOCKER_CI_IMAGE
-            registryUrl env.dockerRegistryUrl
-            registryCredentialsId env.dockerJenkinsCreds
-            alwaysPull false
-            reuseNode true
-            args dockerCiArgs
-        }
-    }
-
     node {
         echo '===== Pipeline Initialization begin ================================================================'
         checkout scm
@@ -41,7 +29,16 @@ def call(config) {
 
         stages {
             stage('Build') {
-                agent agentDefinition
+                agent {
+                    docker {
+                        image DOCKER_CI_IMAGE
+                        registryUrl env.dockerRegistryUrl
+                        registryCredentialsId env.dockerJenkinsCreds
+                        alwaysPull false
+                        reuseNode true
+                        args dockerCiArgs
+                    }
+                }
                 when { allOf { not { branch 'release' }; expression { config.stageCommands.get 'build'} } }
                 steps {
                     echo '===== Build stage begin ============================================================================'
@@ -51,7 +48,16 @@ def call(config) {
                 }
             }
             stage('Test') {
-                agent agentDefinition
+                agent {
+                    docker {
+                        image DOCKER_CI_IMAGE
+                        registryUrl env.dockerRegistryUrl
+                        registryCredentialsId env.dockerJenkinsCreds
+                        alwaysPull false
+                        reuseNode true
+                        args dockerCiArgs
+                    }
+                }
                 when { not { branch 'release' } }
                 steps {
                     // Allow clients to pull other images for testing
@@ -73,7 +79,16 @@ def call(config) {
                 }
             }
             stage('Package') {
-                agent agentDefinition
+                agent {
+                    docker {
+                        image DOCKER_CI_IMAGE
+                        registryUrl env.dockerRegistryUrl
+                        registryCredentialsId env.dockerJenkinsCreds
+                        alwaysPull false
+                        reuseNode true
+                        args dockerCiArgs
+                    }
+                }
                 when { anyOf { branch 'master'; branch 'candidate'; branch 'hotfix' } }
                 steps {
                     withCredentials([usernamePassword(
@@ -126,7 +141,16 @@ def call(config) {
                 }
             }
             stage('Integration Test') {
-                agent agentDefinition
+                agent {
+                    docker {
+                        image DOCKER_CI_IMAGE
+                        registryUrl env.dockerRegistryUrl
+                        registryCredentialsId env.dockerJenkinsCreds
+                        alwaysPull false
+                        reuseNode true
+                        args dockerCiArgs
+                    }
+                }
                 when { anyOf {
                     allOf { branch 'master'; environment name: 'TARGET_ENV', value: 'dev' }
                     allOf { branch 'candidate'; environment name: 'TARGET_ENV', value: 'pre-prod' }
