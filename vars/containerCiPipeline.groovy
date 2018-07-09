@@ -88,7 +88,7 @@ def call(config) {
                         args dockerCiArgs
                     }
                 }
-                when { anyOf { branch 'master'; branch 'hotfix' } }
+                when { anyOf { branch 'master'; branch 'candidate'; branch 'hotfix' } }
                 steps {
                     withCredentials([usernamePassword(
                             credentialsId: env.nexusJenkinsCreds,
@@ -102,7 +102,10 @@ def call(config) {
                 }
             }
             stage('Archive') {
-                when { anyOf { branch 'master'; branch 'hotfix' } }
+                when { anyOf {
+                    allOf { branch 'master'; environment name: 'TARGET_ENV', value: 'dev' }
+                    allOf { branch 'candidate'; environment name: 'TARGET_ENV', value: 'pre-prod' }
+                    allOf { branch 'hotfix'; environment name: 'TARGET_ENV', value: 'pre-prod' }}}
                 steps {
                     withCredentials([usernamePassword(
                             credentialsId: env.dockerJenkinsCreds,
@@ -122,7 +125,10 @@ def call(config) {
                 }
             }
             stage('Deploy') {
-                when { anyOf { branch 'master'; branch 'hotfix' } }
+                when { anyOf {
+                    allOf { branch 'master'; environment name: 'TARGET_ENV', value: 'dev' }
+                    allOf { branch 'candidate'; environment name: 'TARGET_ENV', value: 'pre-prod' }
+                    allOf { branch 'hotfix'; environment name: 'TARGET_ENV', value: 'pre-prod' }}}
                 steps {
                     withCredentials(config?.pipeline?.secrets) {
                         configFileProvider(config?.pipeline?.facts) {
@@ -144,7 +150,10 @@ def call(config) {
                         args dockerCiArgs
                     }
                 }
-                when { anyOf { branch 'master'; branch 'hotfix' } }
+                when { anyOf {
+                    allOf { branch 'master'; environment name: 'TARGET_ENV', value: 'dev' }
+                    allOf { branch 'candidate'; environment name: 'TARGET_ENV', value: 'pre-prod' }
+                    allOf { branch 'hotfix'; environment name: 'TARGET_ENV', value: 'pre-prod' }}}
                 steps {
                     // Allow clients to pull other images for testing
                     withCredentials([usernamePassword(

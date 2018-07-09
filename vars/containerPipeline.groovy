@@ -25,7 +25,8 @@ def call(Map config) {
         currentBuild.result = 'ABORTED'
         errorList += '==> Jenkins global environment variable \'TARGET_ENV\' is required'
     }
-    // TODO: check required credentialIds
+    // TODO: required Jenkins credentialIds
+    // TODO: TARGET_ENV vs branch check
 
     // environment block ----------------------------------------------------------------
     env.DOCKER_PROJECT = config?.environment?.DOCKER_PROJECT
